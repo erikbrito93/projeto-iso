@@ -14,6 +14,22 @@ class Process:
 		self.is_finished = False
 		self.current_execution_time = 0
 
+	@property
+	def printer_code(self) -> int:
+		return self.printer_code
+
+	@property
+	def scanner_req(self) -> int:
+		return self.scanner_req
+	
+	@property
+	def modem_req(self) -> int:
+		return self.modem_req
+	
+	@property
+	def driver_code(self) -> int:
+		return self.driver_code
+
 	def runInstruction(self):
 		if (self.execution_time == 0):
 			print ("P" + str(self.PID) + " STARTED")
@@ -23,5 +39,3 @@ class Process:
 		if (self.execution_time >= self.processing_time):
 			self.is_finished = True
 			print ("P" + str(self.PID) + " return SIGINT")
-			
-
