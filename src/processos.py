@@ -5,6 +5,7 @@ class Process:
 		self.priority = priority
 		self.processing_time = processing_time
 		self.memory_blocks = memory_blocks
+		self.memory_offset = 0
 		self.printer_code = printer_code
 		self.scanner_req = scanner_req
 		self.modem_req = modem_req
