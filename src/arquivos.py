@@ -17,14 +17,27 @@ class FileManager(object):
         self.file_operations = None # Operações de arquivo a serem executadas
         self.has_pending_ops = False # Controle de informação de existência de operações pendentes
         self.is_running_ops = False # Controle de status de execução de operações em disco
+        self.thread_alive = False # Controle de execução da thread
         self.thread = Thread(target=self.run) # Thread da execução do gerenciamento de arquivos
-
-        self.readStorageFile()
-        self.thread.start()
 
 
     def __del__(self):
         self.printStorageMap()
+
+
+    def start(self):
+        """Inicia a execução do gerenciador de arquivos."""
+
+        self.thread_alive = True
+        self.readStorageFile()
+        self.thread.start()
+
+
+    def stop(self):
+        """Termina a execução do gerenciador de arquivos."""
+
+        self.thread_alive = False
+        self.thread.join()
 
     
     def createFile(self, pid: int, file_name: str, n_blocks: int) -> bool:
@@ -87,9 +100,9 @@ class FileManager(object):
 
     
     def run(self):
-        """Inicia a execução do gerenciador de arquivos."""
+        """Controla o fluxo da execução do gerenciador de arquivos."""
 
-        while True:
+        while self.thread_alive:
             if self.has_pending_ops and not self.is_running_ops:
                 self.runFileOperations()
             else:
