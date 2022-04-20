@@ -1,5 +1,6 @@
 from src.processos import Process
 from src.memoria import MemoryManager
+from src.recursos import ResourceManager
 import queue
 
 # Classe responsável por criar processos e também inseri-los nas filas de execução quando estes estão aptos.
@@ -7,6 +8,7 @@ class QueueManager:
 	# Inicializa as filas de execução e também cria os gerenciadores auxiliares.
 	def __init__(self):
 		self.memory_manager = MemoryManager()
+		self.resource_manager = ResourceManager()
 		self.processes = []
 		self.real_time_processes = queue.Queue(1000)
 		self.user_processes = queue.Queue(1000)
@@ -14,13 +16,17 @@ class QueueManager:
 		self.user_processes2 = queue.Queue(1000)
 		self.user_processes3 = queue.Queue(1000)
 		self.current_process = {}
-		self.last_PID = 0
+		self._last_PID = 0
 		self.is_finished = False
 		self.quantum = 5
 
+	@property
+	def last_PID(self) -> int:
+		return self._last_PID
+	
 	# Cria um processo com os parâmetros dados, dando a cada um um número de PID único.
 	def createProcess(self, start_time, priority, processing_time, memory_blocks, printer_code, scanner_req, modem_req, driver_code):
-		self.last_PID += 1
+		self._last_PID += 1
 		newProcess = Process(self.last_PID, start_time, priority, processing_time, memory_blocks, printer_code, scanner_req, modem_req, driver_code)
 		self.processes.append(newProcess)
 
@@ -51,19 +57,42 @@ class QueueManager:
 		if (len(self.processes) > position):
 			# Enfileirar processos em tempo real
 			if (self.processes[position].priority == 0 and time >= self.processes[position].start_time):
-				if (self.memory_manager.allocateMemory(self.processes[position]) != -1):
+				if (self.processes[position].PID in self.memory_manager.waiting_processes):
+					if (self.memory_manager.allocateMemory(self.processes[position]) != -1):
+						if (self.resource_manager.scanProcess(self.processes[position]) == 0):	
+							enqueued = True	
+						else:
+							self.memory_manager.freeMemory(self.processes[position])			
+				elif (self.resource_manager.scanProcess(self.processes[position]) == 0):
+					if (self.memory_manager.allocateMemory(self.processes[position]) != -1):
+						enqueued = True
+					else:
+						self.resource_manager.releaseResources(self.processes[position])
+				if enqueued:
 					self.announceProcess(self.processes[position])
 					self.real_time_processes.put(self.processes.pop(position))
-					enqueued = True
+				
 			# Enfileirar processos de usuário
 			elif (time >= self.processes[position].start_time):
-				memory_offset = self.memory_manager.allocateMemory(self.processes[position])
-				if (memory_offset != -1):
+				memory_offset = 0
+				if (self.processes[position].PID in self.memory_manager.waiting_processes):
+					memory_offset = self.memory_manager.allocateMemory(self.processes[position])
+					if (memory_offset != -1):
+						if (self.resource_manager.scanProcess(self.processes[position]) == 0):	
+							enqueued = True				
+						else:
+							self.memory_manager.freeMemory(self.processes[position])
+				elif (self.resource_manager.scanProcess(self.processes[position]) == 0):
+					memory_offset = self.memory_manager.allocateMemory(self.processes[position])
+					if (memory_offset != -1):
+						enqueued = True
+					else:
+						self.resource_manager.releaseResources(self.processes[position])
+				if enqueued: 
 					self.processes[position].memory_offset = memory_offset
 					self.announceProcess(self.processes[position])
 					self.user_processes.put(self.processes.pop(position))
-					enqueued = True
-
+						
 		# Aqui é verificado se o próximo processo na lista também está pronto para ser enfileirado.
 		# Caso positivo, abrimos uma nova recursão para enfileirá-lo.
 		if (len(self.processes) > position):
@@ -128,6 +157,7 @@ class QueueManager:
 				# 5) Caso o processo se encerre, liberamos a memória alocada para ele.
 				if (self.current_process.is_finished):
 					self.memory_manager.freeMemory(self.current_process)
+					self.resource_manager.releaseResources(self.current_process)
 					self.current_process = {}
 					print (" ")
 
@@ -141,7 +171,7 @@ class QueueManager:
 					print (" ")
 					
 			# 8) O loop se encerra quando todas as filas estão vazias e não há mais processos ocupando a CPU.
-			if (len(self.processes) == 0 and self.real_time_processes.empty() and self.user_processes1.empty() and self.user_processes2.empty() and self.user_processes3.empty() and self.current_process == {}):
+			if (len(self.processes) == 0 and self.real_time_processes.empty() and self.user_processes.empty() and self.user_processes1.empty() and self.user_processes2.empty() and self.user_processes3.empty() and self.current_process == {}):
 				self.is_finished = True
 			time += 1
 

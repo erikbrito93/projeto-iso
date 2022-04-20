@@ -5,11 +5,12 @@ from threading import Thread
 class FileManager(object):
     """Gerencia os sistema de arquivos do pseudo S.O."""
 
-    def __init__(self, storage_file: str):
+    def __init__(self, storage_file: str, PIDs):
         if not isfile(storage_file):
             raise StorageFileNotFound("Arquivo de armazenamento %s não encontrado!" % storage_file)
 
         self.storage_file = storage_file
+        self.PIDs_of_processes = PIDs
         self.total_blocks = None # Quantidade total de blocos do sistema de arquivos
         self.n_occupied_segments = None # Quantide de arquivos escritos
         self.occupied_segments = None # Informação dos arquivos escritos conforme tupla (PID, bloco inicial, quantidade de blocos)
@@ -19,8 +20,7 @@ class FileManager(object):
         self.is_running_ops = False # Controle de status de execução de operações em disco
         self.thread_alive = False # Controle de execução da thread
         self.thread = Thread(target=self.run) # Thread da execução do gerenciamento de arquivos
-
-
+    
     def __del__(self):
         self.printStorageMap()
 
@@ -140,6 +140,7 @@ class FileManager(object):
         for l in lines[2 + self.n_occupied_segments:]:
             operation_info = [i.strip() for i in l.split(", ")]
             self.file_operations.append(operation_info)
+            self.has_pending_ops = True
 
 
     def writeStorageFile(self):
@@ -161,13 +162,18 @@ class FileManager(object):
         self.is_running_ops = True # Informa o início de operações, bloqueando novas operações
         self.readStorageFile()
 
-        for op in self.file_operations:
+        print ("Sistema de arquivos:\n")
+        
+        for opnumber, op in enumerate(self.file_operations, start=1):
+            print("\nOperação " + str(opnumber) + ":")
             pid = int(op[0])
             operation_type = int(op[1])
             file_name = op[2]
 
             # Operação de criação de arquivo
-            if operation_type == 0:
+            if (pid < 1 or pid > self.PIDs_of_processes):
+                print("Falha: não existe o processo.")
+            elif operation_type == 0:
                 n_blocks = int(op[3])
                 required_free_blocks = [0 for _ in range(n_blocks)]
 

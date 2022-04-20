@@ -6,29 +6,29 @@ class Process:
 		self.processing_time = processing_time
 		self.memory_blocks = memory_blocks
 		self.memory_offset = 0
-		self.printer_code = printer_code
-		self.scanner_req = scanner_req
-		self.modem_req = modem_req
-		self.driver_code = driver_code
+		self._printer_code = printer_code
+		self._scanner_req = scanner_req
+		self._modem_req = modem_req
+		self._driver_code = driver_code
 		self.execution_time = 0
 		self.is_finished = False
 		self.current_execution_time = 0
 
 	@property
 	def printer_code(self) -> int:
-		return self.printer_code
+		return self._printer_code
 
 	@property
 	def scanner_req(self) -> int:
-		return self.scanner_req
+		return self._scanner_req
 	
 	@property
 	def modem_req(self) -> int:
-		return self.modem_req
+		return self._modem_req
 	
 	@property
 	def driver_code(self) -> int:
-		return self.driver_code
+		return self._driver_code
 
 	def runInstruction(self):
 		if (self.execution_time == 0):
