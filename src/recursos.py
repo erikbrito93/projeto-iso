@@ -112,12 +112,12 @@ class ResourceManager(object):
                 # Verifica se o recurso está livre pra uso
                 if r.locked_process:
                     if (process.PID not in self.waiting_processes[index]):
-                        print("O recurso %s não está disponível para uso do processo %s, (reservado ao processo %s)." % (r.name, process.PID, r.locked_process))
+                        print("\n\tO recurso %s não está disponível para uso do processo %s, (reservado ao processo %s)." % (r.name, process.PID, r.locked_process))
                         self.waiting_processes[index].append(process.PID)
                 elif others_available:
                     r.locked_process = process.PID # Regitra no recurso o PID do processo que reservou o uso
 
-                    print("Recurso %s reservado para o processo %s." % (r.name, r.locked_process))
+                    print("\n\tRecurso %s reservado para o processo %s." % (r.name, r.locked_process))
                     if (process.PID in self.waiting_processes[index]):
                         self.waiting_processes[index].remove(process.PID)
                     return r
@@ -136,7 +136,7 @@ class ResourceManager(object):
             if r.locked_process == process.PID: 
                 r.locked_process = 0 # Libera o uso do recurso
 
-                print("Recurso %s liberado pelo processo %s." % (r.name, process.PID))
+                print("\n\tRecurso %s liberado pelo processo %s." % (r.name, process.PID))
 
     def useResource(self, process: Process, resource_type: str):
         """Representa o uso de um recurso de E/S."""

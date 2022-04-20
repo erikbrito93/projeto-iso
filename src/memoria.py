@@ -18,7 +18,7 @@ class MemoryManager:
 				return 0
 			else:
 				if (process.PID not in self.waiting_processes):
-					print ("Processo " + str(process.PID) + " em espera por falta de memória.")
+					print ("\n\tProcesso " + str(process.PID) + " em espera por falta de memória.")
 					self.waiting_processes.append(process.PID)
 				return -1
 		else:
@@ -30,7 +30,7 @@ class MemoryManager:
 				return self.user_memory_offset - process.memory_blocks
 			else:
 				if (process.PID not in self.waiting_processes):
-					print ("Processo " + str(process.PID) + " em espera por falta de memória.")
+					print ("\n\tProcesso " + str(process.PID) + " em espera por falta de memória.")
 					self.waiting_processes.append(process.PID)
 				return -1
 
